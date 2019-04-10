@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 
   char *line = NULL;
   size_t line_capacity = 0;
-  size_t read;
+  int read;
 
   size_t array_capacity = 600 * 1024 * 1024;
   uint64_t *array = (uint64_t *)malloc(array_capacity * sizeof(uint64_t));
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     if (read < 16) {
       printf("\r%256s", "");
       fflush(NULL);
-      printf("Skipping line %s since it is too short (%zu)\n", line, read);
+      printf("Skipping line %s since it is too short (%d)\n", line, read);
       continue;
     }
     uint64_t x1 = hex_to_u32_nocheck((const uint8_t *)line);

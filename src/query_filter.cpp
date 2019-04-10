@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "hexutil.h"
 #include "mappeablexorfilter.h"
 #include <fcntl.h>
@@ -62,9 +61,9 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  fread(&cookie, sizeof(cookie), 1, fp);
-  fread(&seed, sizeof(seed), 1, fp);
-  fread(&BlockLength, sizeof(BlockLength), 1, fp);
+  if(fread(&cookie, sizeof(cookie), 1, fp) != 1) printf("failed read.\n");
+  if(fread(&seed, sizeof(seed), 1, fp) != 1) printf("failed read.\n");
+  if(fread(&BlockLength, sizeof(BlockLength), 1, fp) != 1) printf("failed read.\n");
   if (cookie != expectedcookie) {
     printf("Not a filter file.\n");
     return EXIT_FAILURE;
