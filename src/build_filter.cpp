@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include <iostream>
 #include <sstream>
-
+#include <limits.h>
 #include "bloom.h"
 #include "xorfilter.h"
 #include "xorfilter_plus.h"
