@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     size_t read;
 
     size_t array_capacity = 600 * 1024 * 1024;
-    uint64_t * array = (uint64_t*) malloc(array_capacity);
+    uint64_t * array = (uint64_t*) malloc(array_capacity * sizeof(uint64_t));
     if(array == NULL) {
         printf("Cannot allocate 5GB. Use a machine with plenty of RAM.");
         return EXIT_FAILURE;        
@@ -121,7 +121,6 @@ int main(int argc, char** argv) {
         array[array_size++] = (x1 << 48) | (x2 << 32) | (x3 << 16) | x4;
         if((array_size > 0) && ((array_size % 1000000)  == 0)) {
             printf("\rread %zu hashes.", array_size);
-            if(array_size > 1000000*80)break;// TODO: release me
         }
         fflush(NULL);
     }

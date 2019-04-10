@@ -39,3 +39,12 @@ make
 ````
 
 where 'pwned-passwords-sha1-ordered-by-count-v4.txt' is the file you want to process.
+
+Sample output:
+
+```
+./build_filter pwned-passwords-sha1-ordered-by-count-v4.txt
+I read 551509767 hashes in total (121.942 seconds).
+Constructing the filter...
+Done in 102.147 seconds.
+```
