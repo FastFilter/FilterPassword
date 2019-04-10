@@ -109,6 +109,15 @@ int main(int argc, char** argv) {
               line);
             continue;
         }
+        if(array_size >= array_capacity) {
+            array_capacity = 3 * array_size / 2 + 64;
+            uint64_t * newarray = (uint64_t *)realloc(array, array_capacity);
+            if(newarray == NULL) {
+              printf("Reallocation failed. Aborting.\n");
+              return EXIT_FAILURE;
+            }
+            array = newarray;
+        }
         array[array_size++] = (x1 << 48) | (x2 << 32) | (x3 << 16) | x4;
         if((array_size > 0) && ((array_size % 1000000)  == 0)) {
             printf("\rread %zu hashes.", array_size);
