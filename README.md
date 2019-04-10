@@ -2,13 +2,18 @@
 ## Requirement
 
 
-You need a machine with a sizeable amount of free RAM. It will
-almost surely fail on a laptop with 4GB or 8GB of RAM.
-
 We expect Linux or macOS.
 
-## Usage
 
+## Limitations
+
+The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB or 8GB of RAM.
+
+Queries are very cheap, however.
+
+
+
+## Preparing the data file
 
 Grab password file from
 https://haveibeenpwned.com/passwords
@@ -30,8 +35,17 @@ sudo apt-get install p7zip-full
 7z x  pwned-passwords-sha1-ordered-by-count-v4.7z
 ```
 
+This takes a long time. The rest of our process is faster.
 
-Then do 
+## Usage
+
+
+There are two executables:
+
+- `build_filter` is the expensive program that parses the large text files containing password hashes.
+- `query_filter` is a simple program that takes a 64-bit hash in hexadecimal for (the first 16 hexadecimal characters from the SHA1 hash) and checks whether the hash is contained in our set.
+
+Do 
 
 ```
 make
