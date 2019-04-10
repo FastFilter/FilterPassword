@@ -3,7 +3,7 @@
 
 Suppose that you have a database made of half a billion passwords. You want to check quickly whether a given password is in this database. We allow a small probability of false positives (that can be later checked against the full database) but we otherwise do not want any false negatives (if the password is in the set, we absolutely want to know about it).
 
-The typical approach to this problem is to apply a Bloom filters. We test here an Xor Filter.
+The typical approach to this problem is to apply a Bloom filters. We test here an Xor Filter. The goal is for the filter to use very little memory.
 
 
 ## Requirement
@@ -43,6 +43,12 @@ sudo apt-get install p7zip-full
 ```
 
 This takes a long time. The rest of our process is faster.
+
+
+## Design of the filter
+
+Though the filter can use little memory (less than a GB), it seems unwarranted to load it up entirely in memory to query a few times. Thus we use memory-file mapping instead.  Given that the filter is immutable, it is even safe to use it as part of multithreaded applications.
+
 
 ## Usage
 
