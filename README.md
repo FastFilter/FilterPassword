@@ -35,7 +35,7 @@ brew install p7zip
 
 where 'pwned-passwords-sha1-ordered-by-count-v4.7z' is the name of the file you downloaded.
 
-The process is similar under Linx. On Linux Ubuntu, try:
+The process is similar under Linux. On Linux Ubuntu, try:
 
 ```
 sudo apt-get install p7zip-full
