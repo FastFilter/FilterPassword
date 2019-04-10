@@ -35,7 +35,8 @@ Then do
 
 ```
 make
-./build_filter pwned-passwords-sha1-ordered-by-count-v4.txt
+./build_filter -o filter.bin pwned-passwords-sha1-ordered-by-count-v4.txt
+./query_filter filter.bin 7C4A8D09CA3762AF
 ````
 
 where 'pwned-passwords-sha1-ordered-by-count-v4.txt' is the file you want to process.
