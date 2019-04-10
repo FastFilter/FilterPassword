@@ -16,6 +16,7 @@
 static void printusage(char *command) {
   printf(" Try %s -f xor8 -o filter.bin mydatabase \n", command);
   ;
+  printf("The supported filters are xor8 and bloom12.\n");
 }
 
 int main(int argc, char **argv) {
@@ -108,6 +109,7 @@ int main(int argc, char **argv) {
     fflush(NULL);
   }
   clock_t end = clock();
+  free(line);
   size_t numberofbytes = ftello(fp);
   fclose(fp);
 
@@ -116,39 +118,75 @@ int main(int argc, char **argv) {
   printf("Bytes read = %zu.\n", numberofbytes);
   printf("Constructing the filter...\n");
   fflush(NULL);
-  start = clock();
-  using Table = xorfilter::XorFilter<uint64_t, uint8_t, SimpleMixSplit>;
-  Table table(array_size);
-  table.AddAll(array, 0, array_size);
-  end = clock();
-  printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
-  free(array);
-  free(line);
+  if (strcmp("xor8", filtername) == 0) {
+    start = clock();
+    using Table = xorfilter::XorFilter<uint64_t, uint8_t, SimpleMixSplit>;
+    Table table(array_size);
+    table.AddAll(array, 0, array_size);
+    end = clock();
+    printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
+    free(array);
 
-  FILE *write_ptr;
-  write_ptr = fopen(outputfilename, "wb");
-  if (write_ptr == NULL) {
-    printf("Cannot write to the output file %s.", outputfilename);
-    return EXIT_FAILURE;
-  }
-  uint64_t cookie = 1234567;
-  uint64_t seed = table.hasher->seed;
-  uint64_t BlockLength = table.blockLength;
-  bool isok = true;
-  size_t total_bytes = sizeof(cookie) + sizeof(seed) + sizeof(BlockLength) +
-                       sizeof(uint8_t) * 3 * BlockLength;
-  isok &= fwrite(&cookie, sizeof(cookie), 1, write_ptr);
-  isok &= fwrite(&seed, sizeof(seed), 1, write_ptr);
-  isok &= fwrite(&BlockLength, sizeof(BlockLength), 1, write_ptr);
-  isok &= fwrite(table.fingerprints, sizeof(uint8_t) * 3 * BlockLength, 1,
-                 write_ptr);
-  isok &= (fclose(write_ptr) == 0);
-  if (isok) {
-    printf("filter data saved to %s. Total bytes = %zu. \n", outputfilename,
-           total_bytes);
+    FILE *write_ptr;
+    write_ptr = fopen(outputfilename, "wb");
+    if (write_ptr == NULL) {
+      printf("Cannot write to the output file %s.", outputfilename);
+      return EXIT_FAILURE;
+    }
+    uint64_t cookie = 1234567;
+    uint64_t seed = table.hasher->seed;
+    uint64_t BlockLength = table.blockLength;
+    bool isok = true;
+    size_t total_bytes = sizeof(cookie) + sizeof(seed) + sizeof(BlockLength) +
+                         sizeof(uint8_t) * 3 * BlockLength;
+    isok &= fwrite(&cookie, sizeof(cookie), 1, write_ptr);
+    isok &= fwrite(&seed, sizeof(seed), 1, write_ptr);
+    isok &= fwrite(&BlockLength, sizeof(BlockLength), 1, write_ptr);
+    isok &= fwrite(table.fingerprints, sizeof(uint8_t) * 3 * BlockLength, 1,
+                   write_ptr);
+    isok &= (fclose(write_ptr) == 0);
+    if (isok) {
+      printf("filter data saved to %s. Total bytes = %zu. \n", outputfilename,
+             total_bytes);
+    } else {
+      printf("failed to write filter data to %s.\n", outputfilename);
+      return EXIT_FAILURE;
+    }
+  } else if (strcmp("bloom12", filtername) == 0) {
+    start = clock();
+    using Table = bloomfilter::BloomFilter<uint64_t, 12, false, SimpleMixSplit>;
+    Table table(array_size);
+    table.AddAll(array, 0, array_size);
+    end = clock();
+    printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
+    free(array);
+    FILE *write_ptr;
+    write_ptr = fopen(outputfilename, "wb");
+    if (write_ptr == NULL) {
+      printf("Cannot write to the output file %s.", outputfilename);
+      return EXIT_FAILURE;
+    }
+    uint64_t cookie = 1234568;
+    uint64_t seed = table.hasher.seed;
+    uint64_t ArrayLength = table.SizeInBytes() / 8;
+    bool isok = true;
+    size_t total_bytes = sizeof(cookie) + sizeof(seed) + sizeof(ArrayLength) +
+                         sizeof(uint8_t) * 8 * ArrayLength;
+    isok &= fwrite(&cookie, sizeof(cookie), 1, write_ptr);
+    isok &= fwrite(&seed, sizeof(seed), 1, write_ptr);
+    isok &= fwrite(&ArrayLength, sizeof(ArrayLength), 1, write_ptr);
+    isok &= fwrite(table.data, sizeof(uint8_t) * 8 * ArrayLength, 1, write_ptr);
+    isok &= (fclose(write_ptr) == 0);
+    if (isok) {
+      printf("filter data saved to %s. Total bytes = %zu. \n", outputfilename,
+             total_bytes);
+    } else {
+      printf("failed to write filter data to %s.\n", outputfilename);
+      return EXIT_FAILURE;
+    }
+
   } else {
-    printf("failed to write filter data to %s.\n", outputfilename);
-    return EXIT_FAILURE;
+    printf("unknown filter: %s \n", filtername);
   }
   return EXIT_SUCCESS;
 }

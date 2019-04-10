@@ -1,4 +1,5 @@
 #include "hexutil.h"
+#include "mappeablebloomfilter.h"
 #include "mappeablexorfilter.h"
 #include <fcntl.h>
 #include <getopt.h>
@@ -12,7 +13,7 @@
 #include <sys/mman.h>
 
 static void printusage(char *command) {
-  printf(" Try %s -f xor8  filter.bin  7C4A8D09CA3762AF6 \n", command);
+  printf(" Try %s  filter.bin  7C4A8D09CA3762AF6 \n", command);
   ;
 }
 
@@ -60,20 +61,33 @@ int main(int argc, char **argv) {
     printf("Cannot read the input file %s.", filename);
     return EXIT_FAILURE;
   }
-
-  if(fread(&cookie, sizeof(cookie), 1, fp) != 1) printf("failed read.\n");
-  if(fread(&seed, sizeof(seed), 1, fp) != 1) printf("failed read.\n");
-  if(fread(&BlockLength, sizeof(BlockLength), 1, fp) != 1) printf("failed read.\n");
+  bool bloom12 = false; // default on xor8
+  if (fread(&cookie, sizeof(cookie), 1, fp) != 1)
+    printf("failed read.\n");
+  if (fread(&seed, sizeof(seed), 1, fp) != 1)
+    printf("failed read.\n");
+  if (fread(&BlockLength, sizeof(BlockLength), 1, fp) != 1)
+    printf("failed read.\n");
   if (cookie != expectedcookie) {
-    printf("Not a filter file.\n");
-    return EXIT_FAILURE;
+    if (cookie == expectedcookie + 1) {
+      bloom12 = true;
+    } else {
+      printf("Not a filter file.\n");
+      return EXIT_FAILURE;
+    }
   }
+  if (bloom12)
+    printf("Bloom filter detected.\n");
+  else
+    printf("Xor filter detected.\n");
   fclose(fp);
   int fd = open(filename, O_RDONLY);
   bool shared = false;
-  size_t length = 3 * BlockLength * sizeof(uint8_t) + 3 * sizeof(uint64_t);
+  size_t length =
+      bloom12 ? BlockLength * sizeof(uint64_t) + 3 * sizeof(uint64_t)
+              : 3 * BlockLength * sizeof(uint8_t) + 3 * sizeof(uint64_t);
   printf("I expect the file to span %zu bytes.\n", length);
-  // for Linux:
+// for Linux:
 #if defined(__linux__) && defined(USE_POPULATE)
   uint8_t *addr = (uint8_t *)(mmap(
       NULL, length, PROT_READ,
@@ -89,18 +103,29 @@ int main(int argc, char **argv) {
   } else {
     printf("memory mapping is a success.\n");
   }
-  MappeableXorFilter<uint8_t> filter(BlockLength, seed,
-                                     addr + 3 * sizeof(uint64_t));
-  if (filter.Contain(hexval)) {
-    printf("Probably in the set.\n");
+  if (bloom12) {
+    MappeableBloomFilter<12> filter(
+        BlockLength, seed, (const uint64_t *)(addr + 3 * sizeof(uint64_t)));
+    if (filter.Contain(hexval)) {
+      printf("Probably in the set.\n");
+    } else {
+      printf("Surely not in the set.\n");
+    }
   } else {
-    printf("Surely not in the set.\n");
+    MappeableXorFilter<uint8_t> filter(BlockLength, seed,
+                                       addr + 3 * sizeof(uint64_t));
+    if (filter.Contain(hexval)) {
+      printf("Probably in the set.\n");
+    } else {
+      printf("Surely not in the set.\n");
+    }
   }
   clock_t end = clock();
 
   printf("Processing time %.3f microseconds.\n",
          (float)(end - start) * 1000.0 * 1000.0 / CLOCKS_PER_SEC);
-  printf("Expected number of ueries per second: %.3f \n", (float) CLOCKS_PER_SEC / (end - start));
+  printf("Expected number of queries per second: %.3f \n",
+         (float)CLOCKS_PER_SEC / (end - start));
   munmap(addr, length);
   return EXIT_SUCCESS;
 }

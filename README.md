@@ -82,5 +82,81 @@ I expect the file to span 678357069 bytes.
 memory mapping is a success.
 Probably in the set.
 Processing time 58.000 microseconds.
-Expected number of ueries per second: 17241.379
+Expected number of queries per second: 17241.379
 ```
+
+
+## Performance comparisons
+
+For a comparable false positive probability (about 0.3%), the Bloom filter uses more space
+and is slower. The main downside of the xor filter is a more expensive construction.
+
+
+```
+$ ./build_filter -m 10000000 -o xor8.bin -f xor8 pwned-passwords-sha1-ordered-by-count-v4.txt
+setting the max. number of entries to 10000000
+read 10000000 hashes.Reached the maximum number of lines 10000000.
+I read 10000000 hashes in total (0.915 seconds).
+Bytes read = 452288199.
+Constructing the filter...
+Done in 1.455 seconds.
+filter data saved to xor8.bin. Total bytes = 12300054.
+
+$ ./build_filter -m 10000000 -o bloom12.bin -f bloom12 pwned-passwords-sha1-ordered-by-count-v4.txt
+setting the max. number of entries to 10000000
+read 10000000 hashes.Reached the maximum number of lines 10000000.
+I read 10000000 hashes in total (0.914 seconds).
+Bytes read = 452288199.
+Constructing the filter...
+Done in 0.448 seconds.
+filter data saved to bloom12.bin. Total bytes = 15000024.
+
+
+
+$ for i in {1..3} ; do ./query_filter xor8.bin 7C4A8D09CA3762AF6 ; done
+hexval = 0x7c4a8d09ca3762af
+Xor filter detected.
+I expect the file to span 12300054 bytes.
+memory mapping is a success.
+Probably in the set.
+Processing time 88.000 microseconds.
+Expected number of queries per second: 11363.637
+hexval = 0x7c4a8d09ca3762af
+Xor filter detected.
+I expect the file to span 12300054 bytes.
+memory mapping is a success.
+Probably in the set.
+Processing time 59.000 microseconds.
+Expected number of queries per second: 16949.152
+hexval = 0x7c4a8d09ca3762af
+Xor filter detected.
+I expect the file to span 12300054 bytes.
+memory mapping is a success.
+Probably in the set.
+Processing time 68.000 microseconds.
+Expected number of queries per second: 14705.883
+
+$ for i in {1..3} ; do ./query_filter bloom12.bin 7C4A8D09CA3762AF6 ; done
+hexval = 0x7c4a8d09ca3762af
+Bloom filter detected.
+I expect the file to span 15000024 bytes.
+memory mapping is a success.
+Surely not in the set.
+Processing time 99.000 microseconds.
+Expected number of queries per second: 10101.010
+hexval = 0x7c4a8d09ca3762af
+Bloom filter detected.
+I expect the file to span 15000024 bytes.
+memory mapping is a success.
+Surely not in the set.
+Processing time 88.000 microseconds.
+Expected number of queries per second: 11363.637
+hexval = 0x7c4a8d09ca3762af
+Bloom filter detected.
+I expect the file to span 15000024 bytes.
+memory mapping is a success.
+Surely not in the set.
+Processing time 86.000 microseconds.
+Expected number of queries per second: 11627.907
+```
+
