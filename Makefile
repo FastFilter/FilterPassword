@@ -4,7 +4,7 @@ dependencies/fastfilter_cpp/src/xorfilter_plus.h:
 	git submodule update --init --recursive
 
 query_filter: src/query_filter.cpp src/hexutil.h            src/mappeablexorfilter.h
-	c++ -O3 -o query_filter src/query_filter.cpp
+	c++ -O3 -o query_filter src/query_filter.cpp -Wall -std=c++11
 
 build_filter: src/build_filter.cpp dependencies/fastfilter_cpp/src/xorfilter.h dependencies/fastfilter_cpp/src/xorfilter_plus.h src/hexutil.h            src/mappeablexorfilter.h
 	c++ -O3 -o build_filter src/build_filter.cpp -std=c++11 -Wall -Idependencies/fastfilter_cpp/src

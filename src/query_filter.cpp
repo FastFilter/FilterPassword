@@ -89,10 +89,8 @@ int main(int argc, char **argv) {
   } else {
     printf("memory mapping is a success.\n");
   }
-  printf("Mapping the filter...\n");
   MappeableXorFilter<uint8_t> filter(BlockLength, seed,
                                      addr + 3 * sizeof(uint64_t));
-  printf("Success!\n");
   if (filter.Contain(hexval)) {
     printf("Probably in the set.\n");
   } else {
@@ -100,9 +98,9 @@ int main(int argc, char **argv) {
   }
   clock_t end = clock();
 
-  printf("Processing time %.3f seconds.\n",
-         (float)(end - start) / CLOCKS_PER_SEC);
-
+  printf("Processing time %.3f microseconds.\n",
+         (float)(end - start) * 1000.0 * 1000.0 / CLOCKS_PER_SEC);
+  printf("Expected number of ueries per second: %.3f \n", (float) CLOCKS_PER_SEC / (end - start));
   munmap(addr, length);
   return EXIT_SUCCESS;
 }

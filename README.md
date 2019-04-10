@@ -71,8 +71,16 @@ where 'pwned-passwords-sha1-ordered-by-count-v4.txt' is the file you want to pro
 Sample output:
 
 ```
-./build_filter pwned-passwords-sha1-ordered-by-count-v4.txt
+$./build_filter pwned-passwords-sha1-ordered-by-count-v4.txt
 I read 551509767 hashes in total (121.942 seconds).
 Constructing the filter...
 Done in 102.147 seconds.
+
+$ ./query_filter filter.bin 7C4A8D09CA3762AF
+hexval = 0x7c4a8d09ca3762af
+I expect the file to span 678357069 bytes.
+memory mapping is a success.
+Probably in the set.
+Processing time 58.000 microseconds.
+Expected number of ueries per second: 17241.379
 ```
