@@ -14,7 +14,7 @@ We expect Linux or macOS.
 
 ## Limitations
 
-The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB or 8GB of RAM.
+The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB or 8GB of RAM. We could further partition the problem (by dividing up the set) for lower memory usage or better parallelization.
 
 Queries are very cheap, however.
 
