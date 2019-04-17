@@ -24,8 +24,9 @@ int main(int argc, char **argv) {
   size_t maxline =
       1000 * 1000 * 1000; // one billion lines ought to be more than enough?
   const char *filtername = "xor8";
+  bool printall = false;
   const char *outputfilename = "filter.bin";
-  while ((c = getopt(argc, argv, "f:ho:m:")) != -1)
+  while ((c = getopt(argc, argv, "af:ho:m:")) != -1)
     switch (c) {
     case 'f':
       filtername = optarg;
@@ -37,11 +38,13 @@ int main(int argc, char **argv) {
       maxline = atoll(optarg);
       printf("setting the max. number of entries to %zu \n", maxline);
       break;
+    case 'a':
+      printall = true;
+      break;
     case 'h':
+    default:
       printusage(argv[0]);
       return 0;
-    default:
-      abort();
     }
   if (optind >= argc) {
     printusage(argv[0]);
@@ -97,7 +100,8 @@ int main(int argc, char **argv) {
       array = newarray;
     }
     uint64_t hexval = (x1 << 48) | (x2 << 32) | (x3 << 16) | x4;
-
+    if (printall)
+      printf("hexval = 0x%" PRIx64 "\n", hexval);
     array[array_size++] = hexval;
     if ((array_size > 0) && ((array_size % 1000000) == 0)) {
       printf("\rread %zu hashes.", array_size);

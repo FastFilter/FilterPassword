@@ -1,6 +1,7 @@
 #include "hexutil.h"
 #include "mappeablebloomfilter.h"
 #include "mappeablexorfilter.h"
+#include "sha.h"
 #include <fcntl.h>
 #include <getopt.h>
 #include <inttypes.h>
@@ -15,38 +16,61 @@
 static void printusage(char *command) {
   printf(" Try %s  filter.bin  7C4A8D09CA3762AF6 \n", command);
   ;
+  printf("Use the -s if you want to provide a string to be hashed (SHA1).\n");
 }
 
 int main(int argc, char **argv) {
   int c;
-  while ((c = getopt(argc, argv, "h")) != -1)
+  bool shaourinput = false;
+  while ((c = getopt(argc, argv, "hs")) != -1)
     switch (c) {
     case 'h':
       printusage(argv[0]);
       return 0;
+    case 's':
+      shaourinput = true;
+      break;
     default:
-      abort();
+      printusage(argv[0]);
+      return 0;
     }
   if (optind + 1 >= argc) {
     printusage(argv[0]);
     return -1;
   }
   const char *filename = argv[optind];
-  const char *hashhex = argv[optind + 1];
-  if (strlen(hashhex) < 16) {
-    printf("bad hex. length is %zu \n", strlen(hashhex));
-    printusage(argv[0]);
-    return -1;
+  printf("using database: %s\n", filename);
+  uint64_t hexval;
+  if (shaourinput) {
+    printf("We are going to hash your input.\n");
+    sha1::SHA1 s;
+    const char *tobehashed = argv[optind + 1];
+    printf("hashing this word: %s\n", tobehashed);
+    s.processBytes(tobehashed, strlen(tobehashed));
+    uint32_t digest[5];
+    s.getDigest(digest);
+    char tmp[48];
+    snprintf(tmp, 45, "%08x %08x %08x %08x %08x", digest[0], digest[1],
+             digest[2], digest[3], digest[4]);
+    printf("SHA1 hash %s\n", tmp);
+    hexval = ((uint64_t)digest[0] << 32) | digest[1];
+  } else {
+    const char *hashhex = argv[optind + 1];
+    if (strlen(hashhex) < 16) {
+      printf("bad hex. length is %zu \n", strlen(hashhex));
+      printusage(argv[0]);
+      return -1;
+    }
+    uint64_t x1 = hex_to_u32_nocheck((const uint8_t *)hashhex);
+    uint64_t x2 = hex_to_u32_nocheck((const uint8_t *)hashhex + 4);
+    uint64_t x3 = hex_to_u32_nocheck((const uint8_t *)hashhex + 8);
+    uint64_t x4 = hex_to_u32_nocheck((const uint8_t *)hashhex + 12);
+    if ((x1 | x2 | x3 | x4) > 0xFFFF) {
+      printf("bad hex value  %s \n", hashhex);
+      return EXIT_FAILURE;
+    }
+    hexval = (x1 << 48) | (x2 << 32) | (x3 << 16) | x4;
   }
-  uint64_t x1 = hex_to_u32_nocheck((const uint8_t *)hashhex);
-  uint64_t x2 = hex_to_u32_nocheck((const uint8_t *)hashhex + 4);
-  uint64_t x3 = hex_to_u32_nocheck((const uint8_t *)hashhex + 8);
-  uint64_t x4 = hex_to_u32_nocheck((const uint8_t *)hashhex + 12);
-  if ((x1 | x2 | x3 | x4) > 0xFFFF) {
-    printf("bad hex value  %s \n", hashhex);
-    return EXIT_FAILURE;
-  }
-  uint64_t hexval = (x1 << 48) | (x2 << 32) | (x3 << 16) | x4;
   printf("hexval = 0x%" PRIx64 "\n", hexval);
   uint64_t cookie = 0;
   uint64_t expectedcookie = 1234567;
