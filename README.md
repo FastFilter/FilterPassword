@@ -64,6 +64,7 @@ Do
 make
 ./build_filter -o filter.bin pwned-passwords-sha1-ordered-by-count-v4.txt
 ./query_filter filter.bin 7C4A8D09CA3762AF
+./query_filter -s filter.bin shadow
 ````
 
 where 'pwned-passwords-sha1-ordered-by-count-v4.txt' is the file you want to process.
@@ -159,4 +160,5 @@ Surely not in the set.
 Processing time 86.000 microseconds.
 Expected number of queries per second: 11627.907
 ```
+
 

@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     printf("We are going to hash your input.\n");
     sha1::SHA1 s;
     const char *tobehashed = argv[optind + 1];
-    printf("hashing this word: %s\n", tobehashed);
+    printf("hashing this word: %s (length in bytes = %zu)\n", tobehashed, strlen(tobehashed));
     s.processBytes(tobehashed, strlen(tobehashed));
     uint32_t digest[5];
     s.getDigest(digest);
