@@ -12,9 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include "xor_singleheader/include/xorfilter.h"
 
 static void printusage(char *command) {
-  printf(" Try %s  filter.bin  7C4A8D09CA3762AF6 \n", command);
+  printf(" Try %s  filter.bin  7C4A8D09CA3762AF \n", command);
   ;
   printf("Use the -s if you want to provide a string to be hashed (SHA1).\n");
 }
@@ -136,13 +137,22 @@ int main(int argc, char **argv) {
       printf("Surely not in the set.\n");
     }
   } else {
-    MappeableXorFilter<uint8_t> filter(BlockLength, seed,
+    xor8_t filter;
+    filter.seed = seed;
+    filter.blockLength = BlockLength;
+    filter.fingerprints = addr + 3 * sizeof(uint64_t);
+    if (xor8_contain(hexval, &filter)) {
+      printf("Probably in the set.\n");
+    } else {
+      printf("Surely not in the set.\n");
+    }
+    /*MappeableXorFilter<uint8_t> filter(BlockLength, seed,
                                        addr + 3 * sizeof(uint64_t));
     if (filter.Contain(hexval)) {
       printf("Probably in the set.\n");
     } else {
       printf("Surely not in the set.\n");
-    }
+    }*/
   }
   clock_t end = clock();
 

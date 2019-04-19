@@ -11,7 +11,7 @@
 #include "bloom.h"
 #include "hexutil.h"
 #include "xorfilter.h"
-#include "xorfilter_plus.h"
+#include "xor_singleheader/include/xorfilter.h"
 
 static void printusage(char *command) {
   printf(" Try %s -f xor8 -o filter.bin mydatabase \n", command);
@@ -123,6 +123,40 @@ int main(int argc, char **argv) {
   printf("Constructing the filter...\n");
   fflush(NULL);
   if (strcmp("xor8", filtername) == 0) {
+    start = clock();
+    xor8_t filter;
+    xor8_allocate(array_size, &filter);
+    xor8_populate(array, array_size, &filter);
+    end = clock();
+    printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
+    free(array);
+
+    FILE *write_ptr;
+    write_ptr = fopen(outputfilename, "wb");
+    if (write_ptr == NULL) {
+      printf("Cannot write to the output file %s.", outputfilename);
+      return EXIT_FAILURE;
+    }
+    uint64_t cookie = 1234567;
+    uint64_t seed = filter.seed;
+    uint64_t BlockLength = filter.blockLength;
+    bool isok = true;
+    size_t total_bytes = sizeof(cookie) + sizeof(seed) + sizeof(BlockLength) +
+                         sizeof(uint8_t) * 3 * BlockLength;
+    isok &= fwrite(&cookie, sizeof(cookie), 1, write_ptr);
+    isok &= fwrite(&seed, sizeof(seed), 1, write_ptr);
+    isok &= fwrite(&BlockLength, sizeof(BlockLength), 1, write_ptr);
+    isok &= fwrite(filter.fingerprints, sizeof(uint8_t) * 3 * BlockLength, 1,
+                   write_ptr);
+    isok &= (fclose(write_ptr) == 0);
+    if (isok) {
+      printf("filter data saved to %s. Total bytes = %zu. \n", outputfilename,
+             total_bytes);
+    } else {
+      printf("failed to write filter data to %s.\n", outputfilename);
+      return EXIT_FAILURE;
+    }
+  } else if (strcmp("oldxor8", filtername) == 0) {
     start = clock();
     using Table = xorfilter::XorFilter<uint64_t, uint8_t, SimpleMixSplit>;
     Table table(array_size);
