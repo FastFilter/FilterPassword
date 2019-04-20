@@ -3,4 +3,4 @@
 	url = https://github.com/FastFilter/fastfilter_cpp.git
 [submodule "dependencies/xor_singleheader"]
 	path = dependencies/xor_singleheader
-	url = git@github.com:FastFilter/xor_singleheader.git
+	url = https://github.com/FastFilter/xor_singleheader.git
