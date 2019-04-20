@@ -1,6 +1,5 @@
 #include "hexutil.h"
 #include "mappeablebloomfilter.h"
-#include "mappeablexorfilter.h"
 #include "sha.h"
 #include <fcntl.h>
 #include <getopt.h>
