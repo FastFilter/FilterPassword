@@ -11,12 +11,13 @@ The typical approach to this problem is to apply a Bloom filters. We test here a
 
 We expect Linux or macOS.
 
+Though the constructed filter may use only about a byte per set entry, the construction itself may need 64 bytes per entry (only during the construction process). A machine with much RAM is recommended.
 
 ## Limitations
 
 The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB or 8GB of RAM. We could further partition the problem (by dividing up the set) for lower memory usage or better parallelization.
 
-Queries are very cheap, however.
+Queries are very fast, however.
 
 
 
