@@ -156,6 +156,7 @@ int main(int argc, char **argv) {
       printf("failed to write filter data to %s.\n", outputfilename);
       return EXIT_FAILURE;
     }
+    xor8_free(&filter);
   } else if (strcmp("oldxor8", filtername) == 0) {
     start = clock();
     using Table = xorfilter::XorFilter<uint64_t, uint8_t, SimpleMixSplit>;
