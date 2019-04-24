@@ -145,13 +145,7 @@ int main(int argc, char **argv) {
     } else {
       printf("Surely not in the set.\n");
     }
-    /*MappeableXorFilter<uint8_t> filter(BlockLength, seed,
-                                       addr + 3 * sizeof(uint64_t));
-    if (filter.Contain(hexval)) {
-      printf("Probably in the set.\n");
-    } else {
-      printf("Surely not in the set.\n");
-    }*/
+
   }
   clock_t end = clock();
 
