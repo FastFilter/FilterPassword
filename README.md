@@ -15,10 +15,11 @@ Though the constructed filter may use only about a byte per set entry, the const
 
 ## Limitations
 
-The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB or 8GB of RAM. We could further partition the problem (by dividing up the set) for lower memory usage or better parallelization.
+The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB or 8GB of RAM; 64 GB of RAM or more is recommended. We could further partition the problem (by dividing up the set) for lower memory usage or better parallelization.
 
 Queries are very fast, however.
 
+We support up to 4 billion entries, if you have the available memory.
 
 
 ## Preparing the data file
