@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
     start = clock();
     xor8_t filter;
     xor8_allocate(array_size, &filter);
-    xor8_populate(array, array_size, &filter);
+    xor8_buffered_populate(array, array_size, &filter);
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
     free(array);
