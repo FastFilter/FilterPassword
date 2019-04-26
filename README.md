@@ -99,11 +99,12 @@ and is slower. The main downside of the xor filter is a more expensive construct
 $ ./build_filter -m 10000000 -o xor8.bin -f xor8 pwned-passwords-sha1-ordered-by-count-v4.txt
 setting the max. number of entries to 10000000
 read 10000000 hashes.Reached the maximum number of lines 10000000.
-I read 10000000 hashes in total (0.915 seconds).
+I read 10000000 hashes in total (0.902 seconds).
 Bytes read = 452288199.
 Constructing the filter...
-Done in 1.455 seconds.
+Done in 1.303 seconds.
 filter data saved to xor8.bin. Total bytes = 12300054.
+
 
 $ ./build_filter -m 10000000 -o bloom12.bin -f bloom12 pwned-passwords-sha1-ordered-by-count-v4.txt
 setting the max. number of entries to 10000000
