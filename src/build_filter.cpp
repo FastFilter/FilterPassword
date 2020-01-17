@@ -176,55 +176,13 @@ int main(int argc, char **argv) {
       return EXIT_FAILURE;
     }
     xor8_free(&filter);
-  } else if (strcmp("oldxor8", filtername) == 0) {
-    start = clock();
-    using Table = xorfilter::XorFilter<uint64_t, uint8_t, SimpleMixSplit>;
-    Table table(array_size);
-    table.AddAll(array, 0, array_size);
-    end = clock();
-    printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
-    if(verify) {
-      printf("Checking for false negatives\n");
-      for(size_t i = 0; i < array_size; i++) {
-        if(table.Contain(array[i]) != xorfilter::Ok) {
-          printf("Detected a false negative. You probably have a bug. Aborting.\n");
-          return EXIT_FAILURE;
-        }
-      }
-      printf("Verified with success: no false negatives\n");
-    }
-    free(array);
-
-    FILE *write_ptr;
-    write_ptr = fopen(outputfilename, "wb");
-    if (write_ptr == NULL) {
-      printf("Cannot write to the output file %s.", outputfilename);
-      return EXIT_FAILURE;
-    }
-    uint64_t cookie = 1234567;
-    uint64_t seed = table.hasher->seed;
-    uint64_t BlockLength = table.blockLength;
-    bool isok = true;
-    size_t total_bytes = sizeof(cookie) + sizeof(seed) + sizeof(BlockLength) +
-                         sizeof(uint8_t) * 3 * BlockLength;
-    isok &= fwrite(&cookie, sizeof(cookie), 1, write_ptr);
-    isok &= fwrite(&seed, sizeof(seed), 1, write_ptr);
-    isok &= fwrite(&BlockLength, sizeof(BlockLength), 1, write_ptr);
-    isok &= fwrite(table.fingerprints, sizeof(uint8_t) * 3 * BlockLength, 1,
-                   write_ptr);
-    isok &= (fclose(write_ptr) == 0);
-    if (isok) {
-      printf("filter data saved to %s. Total bytes = %zu. \n", outputfilename,
-             total_bytes);
-    } else {
-      printf("failed to write filter data to %s.\n", outputfilename);
-      return EXIT_FAILURE;
-    }
-  } else if (strcmp("bloom12", filtername) == 0) {
+  }  else if (strcmp("bloom12", filtername) == 0) {
     start = clock();
     using Table = bloomfilter::BloomFilter<uint64_t, 12, false, SimpleMixSplit>;
     Table table(array_size);
-    table.AddAll(array, 0, array_size);
+    for(size_t i = 0; i < array_size; i++) {
+      table.Add(array[i]);
+    }
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
     if(verify) {
