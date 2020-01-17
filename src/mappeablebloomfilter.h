@@ -3,17 +3,26 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <sstream>
+#include <cmath>
+
+namespace {
+static inline size_t getBestK(size_t bitsPerItem) {
+  return std::max(1, (int)round((double)bitsPerItem * log(2)));
+}
+}
+
 inline uint64_t getBit(uint32_t index) { return 1L << (index & 63); }
 
-template <int k> class MappeableBloomFilter {
+template <int bitsPerItem> class MappeableBloomFilter {
 public:
   size_t arrayLength;
   const uint64_t *data;
   MixSplit hasher;
+  int k;
 
   explicit MappeableBloomFilter(const size_t arrayLength, const uint64_t seed,
                                 const uint64_t *fps)
-      : arrayLength(arrayLength), data(fps), hasher(seed) {}
+      : arrayLength(arrayLength), data(fps), hasher(seed), k(getBestK(bitsPerItem)) {}
 
   // Report if the item is inserted, with false positive rate.
   bool Contain(const uint64_t key) const {

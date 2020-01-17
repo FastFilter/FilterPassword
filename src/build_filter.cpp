@@ -13,11 +13,15 @@
 #include "hexutil.h"
 #include "xorfilter.h"
 #include "xor_singleheader/include/xorfilter.h"
+#include "mappeablebloomfilter.h"
+
 
 static void printusage(char *command) {
   printf(" Try %s -f xor8 -o filter.bin mydatabase \n", command);
   ;
   printf("The supported filters are xor8 and bloom12.\n");
+
+  printf("The -V flag verifies the resulting filter.\n");
 }
 
 int main(int argc, char **argv) {
@@ -26,14 +30,18 @@ int main(int argc, char **argv) {
       1000 * 1000 * 1000; // one billion lines ought to be more than enough?
   const char *filtername = "xor8";
   bool printall = false;
+  bool verify = false;
   const char *outputfilename = "filter.bin";
-  while ((c = getopt(argc, argv, "af:ho:m:")) != -1)
+  while ((c = getopt(argc, argv, "af:ho:m:V")) != -1)
     switch (c) {
     case 'f':
       filtername = optarg;
       break;
     case 'o':
       outputfilename = optarg;
+      break;
+    case 'V':
+      verify = true;
       break;
     case 'm':
       maxline = atoll(optarg);
@@ -130,6 +138,16 @@ int main(int argc, char **argv) {
     xor8_buffered_populate(array, array_size, &filter);
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
+    if(verify) {
+      printf("Checking for false negatives\n");
+      for(size_t i = 0; i < array_size; i++) {
+        if(!xor8_contain(array[i],&filter)) {
+          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+          return EXIT_FAILURE;
+        }
+      }
+      printf("Verified with success: no false negatives\n");
+    }
     free(array);
 
     FILE *write_ptr;
@@ -165,6 +183,16 @@ int main(int argc, char **argv) {
     table.AddAll(array, 0, array_size);
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
+    if(verify) {
+      printf("Checking for false negatives\n");
+      for(size_t i = 0; i < array_size; i++) {
+        if(table.Contain(array[i]) != xorfilter::Ok) {
+          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+          return EXIT_FAILURE;
+        }
+      }
+      printf("Verified with success: no false negatives\n");
+    }
     free(array);
 
     FILE *write_ptr;
@@ -199,6 +227,24 @@ int main(int argc, char **argv) {
     table.AddAll(array, 0, array_size);
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
+    if(verify) {
+      printf("Checking for false negatives\n");
+      for(size_t i = 0; i < array_size; i++) {
+        if(table.Contain(array[i]) != bloomfilter::Ok) {
+          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+          return EXIT_FAILURE;
+        }
+      }
+      MappeableBloomFilter<12> filter(
+        table.SizeInBytes() / 8, table.hasher.seed, table.data);
+      for(size_t i = 0; i < array_size; i++) {
+        if(!filter.Contain(array[i])) {
+          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+          return EXIT_FAILURE;
+        }
+      }
+      printf("Verified with success: no false negatives\n");
+    }
     free(array);
     FILE *write_ptr;
     write_ptr = fopen(outputfilename, "wb");
