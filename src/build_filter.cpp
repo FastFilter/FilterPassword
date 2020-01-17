@@ -1,3 +1,4 @@
+#define __STDC_FORMAT_MACROS
 #define _GNU_SOURCE
 #include <getopt.h>
 #include <inttypes.h>

@@ -1,3 +1,4 @@
+#define __STDC_FORMAT_MACROS
 #include "hexutil.h"
 #include "mappeablebloomfilter.h"
 #include "sha.h"
