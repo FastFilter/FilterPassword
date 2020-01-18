@@ -24,43 +24,9 @@ static void printusage(char *command) {
   printf("The -V flag verifies the resulting filter.\n");
 }
 
-int main(int argc, char **argv) {
-  int c;
-  size_t maxline =
-      1000 * 1000 * 1000; // one billion lines ought to be more than enough?
-  const char *filtername = "xor8";
-  bool printall = false;
-  bool verify = false;
-  const char *outputfilename = "filter.bin";
-  while ((c = getopt(argc, argv, "af:ho:m:V")) != -1)
-    switch (c) {
-    case 'f':
-      filtername = optarg;
-      break;
-    case 'o':
-      outputfilename = optarg;
-      break;
-    case 'V':
-      verify = true;
-      break;
-    case 'm':
-      maxline = atoll(optarg);
-      printf("setting the max. number of entries to %zu \n", maxline);
-      break;
-    case 'a':
-      printall = true;
-      break;
-    case 'h':
-    default:
-      printusage(argv[0]);
-      return 0;
-    }
-  if (optind >= argc) {
-    printusage(argv[0]);
-    return -1;
-  }
-  const char *filename = argv[optind];
 
+
+uint64_t * read_data(const char *filename, size_t & array_size, size_t maxline, bool printall) {
   char *line = NULL;
   size_t line_capacity = 0;
   int read;
@@ -68,16 +34,16 @@ int main(int argc, char **argv) {
   size_t array_capacity = 600 * 1024 * 1024;
   uint64_t *array = (uint64_t *)malloc(array_capacity * sizeof(uint64_t));
   if (array == NULL) {
-    printf("Cannot allocate 5GB. Use a machine with plenty of RAM.");
-    return EXIT_FAILURE;
+    printf("Cannot allocate memory. Use a machine with plenty of RAM.");
+    return nullptr;
   }
-  size_t array_size = 0;
+  array_size = 0;
 
   FILE *fp = fopen(filename, "r");
   if (fp == NULL) {
     printf("Cannot read the input file %s.", filename);
     free(array);
-    return EXIT_FAILURE;
+    return nullptr;
   }
   clock_t start = clock();
 
@@ -104,7 +70,7 @@ int main(int argc, char **argv) {
       uint64_t *newarray = (uint64_t *)realloc(array, array_capacity);
       if (newarray == NULL) {
         printf("Reallocation failed. Aborting.\n");
-        return EXIT_FAILURE;
+        return nullptr;
       }
       array = newarray;
     }
@@ -129,6 +95,69 @@ int main(int argc, char **argv) {
   printf("\rI read %zu hashes in total (%.3f seconds).\n", array_size,
          (float)(end - start) / CLOCKS_PER_SEC);
   printf("Bytes read = %zu.\n", numberofbytes);
+  return array;
+}
+
+int main(int argc, char **argv) {
+  int c;
+  size_t maxline =
+      1000 * 1000 * 1000; // one billion lines ought to be more than enough?
+  const char *filtername = "xor8";
+  bool printall = false;
+  bool verify = false;
+  bool synthetic = false;
+  size_t synthetic_size = 0;
+
+  const char *outputfilename = "filter.bin";
+  while ((c = getopt(argc, argv, "af:ho:m:Vs:")) != -1)
+    switch (c) {
+    case 'f':
+      filtername = optarg;
+      break;
+    case 's':
+      synthetic = true;
+      synthetic_size = atoll(optarg);
+      break;
+    case 'o':
+      outputfilename = optarg;
+      break;
+    case 'V':
+      verify = true;
+      break;
+    case 'm':
+      maxline = atoll(optarg);
+      printf("setting the max. number of entries to %zu \n", maxline);
+      break;
+    case 'a':
+      printall = true;
+      break;
+    case 'h':
+    default:
+      printusage(argv[0]);
+      return 0;
+    }
+  if (optind >= argc) {
+    printusage(argv[0]);
+    return -1;
+  }
+  size_t array_size;
+  uint64_t * array;
+  if(synthetic) {
+    array_size = synthetic_size;
+    array = (uint64_t *)malloc(array_size * sizeof(uint64_t));
+    for(size_t i = 0; i < array_size; i++) {
+      array[i] = i;
+    }
+  } else {
+    const char *filename = argv[optind];
+    array = read_data(filename, array_size, maxline, printall);
+    if(array == nullptr) {
+      return EXIT_FAILURE;
+    }
+  }
+  clock_t start, end;
+
+
   printf("Constructing the filter...\n");
   fflush(NULL);
   if (strcmp("xor8", filtername) == 0) {
@@ -147,6 +176,14 @@ int main(int argc, char **argv) {
         }
       }
       printf("Verified with success: no false negatives\n");
+      size_t matches = 0;
+      size_t volume = 100000;
+      for(size_t t = 0; t < volume; t++) {
+        if(xor8_contain( t * 10001 + 13 + array_size,&filter)) {
+          matches++;
+        }
+      }
+      printf("estimated false positive rate: %.3f percent\n", matches * 100.0 / volume);
     }
     free(array);
 
@@ -202,6 +239,14 @@ int main(int argc, char **argv) {
         }
       }
       printf("Verified with success: no false negatives\n");
+      size_t matches = 0;
+      size_t volume = 100000;
+      for(size_t t = 0; t < volume; t++) {
+        if(filter.Contain( t * 10001 + 13 + array_size)) {
+          matches++;
+        }
+      }
+      printf("estimated false positive rate: %.3f percent\n", matches * 100.0 / volume);
     }
     free(array);
     FILE *write_ptr;
