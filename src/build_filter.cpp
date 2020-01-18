@@ -9,9 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bloom.h"
+#include "bloom/bloom.h"
 #include "hexutil.h"
-#include "xorfilter.h"
+#include "xorfilter/xorfilter.h"
 #include "xor_singleheader/include/xorfilter.h"
 #include "mappeablebloomfilter.h"
 
@@ -136,10 +136,7 @@ int main(int argc, char **argv) {
       printusage(argv[0]);
       return 0;
     }
-  if (optind >= argc) {
-    printusage(argv[0]);
-    return -1;
-  }
+
   size_t array_size;
   uint64_t * array;
   if(synthetic) {
@@ -149,6 +146,10 @@ int main(int argc, char **argv) {
       array[i] = i;
     }
   } else {
+    if (optind >= argc) {
+      printusage(argv[0]);
+      return -1;
+    }
     const char *filename = argv[optind];
     array = read_data(filename, array_size, maxline, printall);
     if(array == nullptr) {
