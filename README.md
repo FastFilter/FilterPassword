@@ -164,4 +164,7 @@ Processing time 86.000 microseconds.
 Expected number of queries per second: 11627.907
 ```
 
+## Reference
+
+* Thomas Mueller Graf,  Daniel Lemire, [Xor Filters: Faster and Smaller Than Bloom and Cuckoo Filters](https://arxiv.org/abs/1912.08258), Journal of Experimental Algorithmics 25 (1), 2020. DOI: 10.1145/3376122
 
