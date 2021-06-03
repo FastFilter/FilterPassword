@@ -1,6 +1,3 @@
 [submodule "dependencies/fastfilter_cpp"]
 	path = dependencies/fastfilter_cpp
 	url = https://github.com/FastFilter/fastfilter_cpp.git
-[submodule "dependencies/xor_singleheader"]
-	path = dependencies/xor_singleheader
-	url = https://github.com/FastFilter/xor_singleheader.git

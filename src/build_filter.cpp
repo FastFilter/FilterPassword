@@ -13,13 +13,15 @@
 #include "hexutil.h"
 #include "xorfilter/xorfilter.h"
 #include "xor_singleheader/include/xorfilter.h"
+#include "xor_singleheader/include/binaryfusefilter.h"
+
 #include "mappeablebloomfilter.h"
 
 
 static void printusage(char *command) {
   printf(" Try %s -f xor8 -o filter.bin mydatabase \n", command);
   ;
-  printf("The supported filters are xor8 and bloom12.\n");
+  printf("The supported filters are xor8, binaryfuse8 and bloom12.\n");
 
   printf("The -V flag verifies the resulting filter.\n");
 }
@@ -102,7 +104,7 @@ int main(int argc, char **argv) {
   int c;
   size_t maxline =
       1000 * 1000 * 1000; // one billion lines ought to be more than enough?
-  const char *filtername = "xor8";
+  const char *filtername = "binaryfuse8";
   bool printall = false;
   bool verify = false;
   bool synthetic = false;
@@ -161,7 +163,68 @@ int main(int argc, char **argv) {
 
   printf("Constructing the filter...\n");
   fflush(NULL);
-  if (strcmp("xor8", filtername) == 0) {
+  if (strcmp("binaryfuse8", filtername) == 0) {
+    start = clock();
+    binary_fuse8_t filter;
+    binary_fuse8_allocate(array_size, &filter);
+    binary_fuse8_populate(array, array_size, &filter);
+    end = clock();
+    printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
+    if(verify) {
+      printf("Checking for false negatives\n");
+      for(size_t i = 0; i < array_size; i++) {
+        if(!binary_fuse8_contain(array[i],&filter)) {
+          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+          return EXIT_FAILURE;
+        }
+      }
+      printf("Verified with success: no false negatives\n");
+      size_t matches = 0;
+      size_t volume = 100000;
+      for(size_t t = 0; t < volume; t++) {
+        if(binary_fuse8_contain( t * 10001 + 13 + array_size,&filter)) {
+          matches++;
+        }
+      }
+      printf("estimated false positive rate: %.3f percent\n", matches * 100.0 / volume);
+    }
+    free(array);
+
+    FILE *write_ptr;
+    write_ptr = fopen(outputfilename, "wb");
+    if (write_ptr == NULL) {
+      printf("Cannot write to the output file %s.", outputfilename);
+      return EXIT_FAILURE;
+    }
+    uint64_t cookie = 1234569;
+    bool isok = true;
+    size_t total_bytes = sizeof(cookie) + sizeof(filter.Seed) + sizeof(filter.SegmentLength)
+                         + sizeof(filter.SegmentLengthMask) + sizeof(filter.SegmentCount)
+                         + sizeof(filter.SegmentCountLength) + sizeof(filter.ArrayLength)
+                         + sizeof(uint8_t) * filter.ArrayLength;
+
+
+    isok &= fwrite(&cookie, sizeof(cookie), 1, write_ptr);
+    isok &= fwrite(&filter.Seed, sizeof(filter.Seed), 1, write_ptr);
+    isok &= fwrite(&filter.SegmentLength, sizeof(filter.SegmentLength), 1, write_ptr);
+    isok &= fwrite(&filter.SegmentLengthMask, sizeof(filter.SegmentLengthMask), 1, write_ptr);
+    isok &= fwrite(&filter.SegmentCount, sizeof(filter.SegmentCount), 1, write_ptr);
+    isok &= fwrite(&filter.SegmentCountLength, sizeof(filter.SegmentCountLength), 1, write_ptr);
+    isok &= fwrite(&filter.ArrayLength, sizeof(filter.ArrayLength), 1, write_ptr);
+
+
+    isok &= fwrite(filter.Fingerprints, sizeof(uint8_t) * filter.ArrayLength, 1,
+                   write_ptr);
+    isok &= (fclose(write_ptr) == 0);
+    if (isok) {
+      printf("filter data saved to %s. Total bytes = %zu. \n", outputfilename,
+             total_bytes);
+    } else {
+      printf("failed to write filter data to %s.\n", outputfilename);
+      return EXIT_FAILURE;
+    }
+    binary_fuse8_free(&filter);
+  } else if (strcmp("xor8", filtername) == 0) {
     start = clock();
     xor8_t filter;
     xor8_allocate(array_size, &filter);
@@ -214,7 +277,7 @@ int main(int argc, char **argv) {
       return EXIT_FAILURE;
     }
     xor8_free(&filter);
-  }  else if (strcmp("bloom12", filtername) == 0) {
+  } else if (strcmp("bloom12", filtername) == 0) {
     start = clock();
     using Table = bloomfilter::BloomFilter<uint64_t, 12, false, SimpleMixSplit>;
     Table table(array_size);

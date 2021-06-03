@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include "xor_singleheader/include/xorfilter.h"
+#include "xor_singleheader/include/binaryfusefilter.h"
 
 static void printusage(char *command) {
   printf(" Try %s  filter.bin  7C4A8D09CA3762AF \n", command);
@@ -74,7 +75,6 @@ int main(int argc, char **argv) {
   }
   printf("hexval = 0x%" PRIx64 "\n", hexval);
   uint64_t cookie = 0;
-  uint64_t expectedcookie = 1234567;
 
   uint64_t seed = 0;
   uint64_t BlockLength = 0;
@@ -86,31 +86,57 @@ int main(int argc, char **argv) {
     printf("Cannot read the input file %s.", filename);
     return EXIT_FAILURE;
   }
-  bool bloom12 = false; // default on xor8
+  bool xor8 = false;
+  bool bloom12 = false;
   if (fread(&cookie, sizeof(cookie), 1, fp) != 1)
     printf("failed read.\n");
   if (fread(&seed, sizeof(seed), 1, fp) != 1)
     printf("failed read.\n");
-  if (fread(&BlockLength, sizeof(BlockLength), 1, fp) != 1)
-    printf("failed read.\n");
-  if (cookie != expectedcookie) {
-    if (cookie == expectedcookie + 1) {
+
+  if (cookie != 1234569) {
+    if(cookie == 1234567) {
+      xor8 = true;
+      if (fread(&BlockLength, sizeof(BlockLength), 1, fp) != 1) printf("failed read.\n");
+    } else if (cookie == 1234567 + 1) {
       bloom12 = true;
+      if (fread(&BlockLength, sizeof(BlockLength), 1, fp) != 1) printf("failed read.\n");
     } else {
       printf("Not a filter file.\n");
       return EXIT_FAILURE;
     }
   }
+  size_t length = 0;
+  binary_fuse8_t binfilter;
+
+  if(bloom12) {
+    length = BlockLength * sizeof(uint64_t) + 3 * sizeof(uint64_t);
+  } else if(xor8) {
+     length = 3 * BlockLength * sizeof(uint8_t) + 3 * sizeof(uint64_t);
+  } else {
+    bool isok = true;
+    isok &= fread(&binfilter.Seed, sizeof(binfilter.Seed), 1, fp);
+    isok &= fread(&binfilter.SegmentLength, sizeof(binfilter.SegmentLength), 1, fp);
+    isok &= fread(&binfilter.SegmentLengthMask, sizeof(binfilter.SegmentLengthMask), 1, fp);
+    isok &= fread(&binfilter.SegmentCount, sizeof(binfilter.SegmentCount), 1, fp);
+    isok &= fread(&binfilter.SegmentCountLength, sizeof(binfilter.SegmentCountLength), 1, fp);
+    isok &= fread(&binfilter.ArrayLength, sizeof(binfilter.ArrayLength), 1, fp);
+    if (!isok) printf("failed read.\n");
+    length = sizeof(cookie) + sizeof(binfilter.Seed) + sizeof(binfilter.SegmentLength)
+                         + sizeof(binfilter.SegmentLengthMask) + sizeof(binfilter.SegmentCount)
+                         + sizeof(binfilter.SegmentCountLength) + sizeof(binfilter.ArrayLength)
+                         + sizeof(uint8_t) * binfilter.ArrayLength;
+  }
+
   if (bloom12)
     printf("Bloom filter detected.\n");
-  else
+  else if (xor8)
     printf("Xor filter detected.\n");
+  else 
+    printf("Binary fuse filter detected.\n");
   fclose(fp);
   int fd = open(filename, O_RDONLY);
   bool shared = false;
-  size_t length =
-      bloom12 ? BlockLength * sizeof(uint64_t) + 3 * sizeof(uint64_t)
-              : 3 * BlockLength * sizeof(uint8_t) + 3 * sizeof(uint64_t);
+
   printf("I expect the file to span %zu bytes.\n", length);
 // for Linux:
 #if defined(__linux__) && defined(USE_POPULATE)
@@ -136,7 +162,7 @@ int main(int argc, char **argv) {
     } else {
       printf("Surely not in the set.\n");
     }
-  } else {
+  } else if(xor8) {
     xor8_t filter;
     filter.seed = seed;
     filter.blockLength = BlockLength;
@@ -146,7 +172,15 @@ int main(int argc, char **argv) {
     } else {
       printf("Surely not in the set.\n");
     }
-
+  } else {
+    binfilter.Fingerprints = addr + sizeof(cookie) + sizeof(binfilter.Seed) + sizeof(binfilter.SegmentLength)
+                         + sizeof(binfilter.SegmentLengthMask) + sizeof(binfilter.SegmentCount)
+                         + sizeof(binfilter.SegmentCountLength) + sizeof(binfilter.ArrayLength);
+    if (binary_fuse8_contain(hexval, &binfilter)) {
+      printf("Probably in the set.\n");
+    } else {
+      printf("Surely not in the set.\n");
+    }    
   }
   clock_t end = clock();
 
