@@ -3,7 +3,7 @@
 
 Suppose that you have a database made of half a billion passwords. You want to check quickly whether a given password is in this database. We allow a small probability of false positives (that can be later checked against the full database) but we otherwise do not want any false negatives (if the password is in the set, we absolutely want to know about it).
 
-The typical approach to this problem is to apply a Bloom filters. We test here an Xor Filter. The goal is for the filter to use very little memory.
+The typical approach to this problem is to apply a Bloom filters. We test here a binary fuse filter. The goal is for the filter to use very little memory.
 
 
 ## Requirement
