@@ -3,7 +3,7 @@
 
 Suppose that you have a database made of half a billion passwords. You want to check quickly whether a given password is in this database. We allow a small probability of false positives (that can be later checked against the full database) but we otherwise do not want any false negatives (if the password is in the set, we absolutely want to know about it).
 
-The typical approach to this problem is to apply a Bloom filters. We test here an Xor Filter. The goal is for the filter to use very little memory.
+The typical approach to this problem is to apply a Bloom filters. We test here a binary fuse filter. The goal is for the filter to use very little memory.
 
 
 ## Requirement
@@ -15,11 +15,11 @@ Though the constructed filter may use only about a byte per set entry, the const
 
 ## Limitations
 
-The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB or 8GB of RAM; 64 GB of RAM or more is recommended. We could further partition the problem (by dividing up the set) for lower memory usage or better parallelization.
+The expectation is that the filter is built once. To build the filter over the full 550 million passwords, you currently need a machine with a sizeable amount of free RAM. It will almost surely fail on a laptop with 4GB  of RAM; 64 GB of RAM or more is recommended. We could further partition the problem (by dividing up the set) for lower memory usage or better parallelization.
 
 Queries are very fast, however.
 
-We support up to 4 billion entries, if you have the available memory.
+We support hundreds of millions of entries and more, if you have the available memory.
 
 
 ## Preparing the data file
@@ -92,79 +92,54 @@ Expected number of queries per second: 17241.379
 ## Performance comparisons
 
 For a comparable false positive probability (about 0.3%), the Bloom filter uses more space
-and is slower. The main downside of the xor filter is a more expensive construction.
+and is slower. The binary fuse 8 uses less space, is constructed faster, and has faster queries.
 
 
 ```
-$ ./build_filter -m 10000000 -o xor8.bin -f xor8 pwned-passwords-sha1-ordered-by-count-v4.txt
+$ ./build_filter -m 10000000 -o binaryfuse8.bin -f binaryfuse8 pwned-passwords-sha1-ordered-by-count-v4.txt
 setting the max. number of entries to 10000000
 read 10000000 hashes.Reached the maximum number of lines 10000000.
-I read 10000000 hashes in total (0.902 seconds).
+I read 10000000 hashes in total (12.644 seconds).
 Bytes read = 452288199.
 Constructing the filter...
-Done in 1.303 seconds.
-filter data saved to xor8.bin. Total bytes = 12300054.
+Done in 0.420 seconds.
+filter data saved to binaryfuse8.bin. Total bytes = 11272228.
 
 
 $ ./build_filter -m 10000000 -o bloom12.bin -f bloom12 pwned-passwords-sha1-ordered-by-count-v4.txt
 setting the max. number of entries to 10000000
 read 10000000 hashes.Reached the maximum number of lines 10000000.
-I read 10000000 hashes in total (0.914 seconds).
+I read 10000000 hashes in total (12.696 seconds).
 Bytes read = 452288199.
 Constructing the filter...
-Done in 0.448 seconds.
+Done in 0.613 seconds.
 filter data saved to bloom12.bin. Total bytes = 15000024.
 
 
 
-$ for i in {1..3} ; do ./query_filter xor8.bin 7C4A8D09CA3762AF6 ; done
+$./query_filter binaryfuse8.bin 7C4A8D09CA3762AF6
+using database: binaryfuse8.bin
 hexval = 0x7c4a8d09ca3762af
-Xor filter detected.
-I expect the file to span 12300054 bytes.
+Binary fuse filter detected.
+I expect the file to span 11206692 bytes.
 memory mapping is a success.
-Probably in the set.
-Processing time 88.000 microseconds.
-Expected number of queries per second: 11363.637
-hexval = 0x7c4a8d09ca3762af
-Xor filter detected.
-I expect the file to span 12300054 bytes.
-memory mapping is a success.
-Probably in the set.
-Processing time 59.000 microseconds.
-Expected number of queries per second: 16949.152
-hexval = 0x7c4a8d09ca3762af
-Xor filter detected.
-I expect the file to span 12300054 bytes.
-memory mapping is a success.
-Probably in the set.
-Processing time 68.000 microseconds.
-Expected number of queries per second: 14705.883
+Surely not in the set.
+Processing time 241.000 microseconds.
+Expected number of queries per second: 4149.377
 
-$ for i in {1..3} ; do ./query_filter bloom12.bin 7C4A8D09CA3762AF6 ; done
+$ ./query_filter bloom12.bin 7C4A8D09CA3762AF6 ; done
+using database: bloom12.bin
 hexval = 0x7c4a8d09ca3762af
 Bloom filter detected.
 I expect the file to span 15000024 bytes.
 memory mapping is a success.
-Surely not in the set.
-Processing time 99.000 microseconds.
-Expected number of queries per second: 10101.010
-hexval = 0x7c4a8d09ca3762af
-Bloom filter detected.
-I expect the file to span 15000024 bytes.
-memory mapping is a success.
-Surely not in the set.
-Processing time 88.000 microseconds.
-Expected number of queries per second: 11363.637
-hexval = 0x7c4a8d09ca3762af
-Bloom filter detected.
-I expect the file to span 15000024 bytes.
-memory mapping is a success.
-Surely not in the set.
-Processing time 86.000 microseconds.
-Expected number of queries per second: 11627.907
+Probably in the set.
+Processing time 344.000 microseconds.
+Expected number of queries per second: 2906.977
 ```
 
 ## Reference
 
+* Thomas Mueller Graf,  Daniel Lemire, Binary Fuse Filters: Fast and Smaller Than Xor Filters
 * Thomas Mueller Graf,  Daniel Lemire, [Xor Filters: Faster and Smaller Than Bloom and Cuckoo Filters](https://arxiv.org/abs/1912.08258), Journal of Experimental Algorithmics 25 (1), 2020. DOI: 10.1145/3376122
 

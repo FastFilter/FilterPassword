@@ -11,12 +11,11 @@
 
 #include "bloom/bloom.h"
 #include "hexutil.h"
-#include "xorfilter/xorfilter.h"
-#include "xor_singleheader/include/xorfilter.h"
 #include "xor_singleheader/include/binaryfusefilter.h"
+#include "xor_singleheader/include/xorfilter.h"
+#include "xorfilter/xorfilter.h"
 
 #include "mappeablebloomfilter.h"
-
 
 static void printusage(char *command) {
   printf(" Try %s -f xor8 -o filter.bin mydatabase \n", command);
@@ -26,9 +25,8 @@ static void printusage(char *command) {
   printf("The -V flag verifies the resulting filter.\n");
 }
 
-
-
-uint64_t * read_data(const char *filename, size_t & array_size, size_t maxline, bool printall) {
+uint64_t *read_data(const char *filename, size_t &array_size, size_t maxline,
+                    bool printall) {
   char *line = NULL;
   size_t line_capacity = 0;
   int read;
@@ -140,11 +138,11 @@ int main(int argc, char **argv) {
     }
 
   size_t array_size;
-  uint64_t * array;
-  if(synthetic) {
+  uint64_t *array;
+  if (synthetic) {
     array_size = synthetic_size;
     array = (uint64_t *)malloc(array_size * sizeof(uint64_t));
-    for(size_t i = 0; i < array_size; i++) {
+    for (size_t i = 0; i < array_size; i++) {
       array[i] = i;
     }
   } else {
@@ -154,12 +152,11 @@ int main(int argc, char **argv) {
     }
     const char *filename = argv[optind];
     array = read_data(filename, array_size, maxline, printall);
-    if(array == nullptr) {
+    if (array == nullptr) {
       return EXIT_FAILURE;
     }
   }
   clock_t start, end;
-
 
   printf("Constructing the filter...\n");
   fflush(NULL);
@@ -170,23 +167,25 @@ int main(int argc, char **argv) {
     binary_fuse8_populate(array, array_size, &filter);
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
-    if(verify) {
+    if (verify) {
       printf("Checking for false negatives\n");
-      for(size_t i = 0; i < array_size; i++) {
-        if(!binary_fuse8_contain(array[i],&filter)) {
-          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+      for (size_t i = 0; i < array_size; i++) {
+        if (!binary_fuse8_contain(array[i], &filter)) {
+          printf("Detected a false negative. You probably have a bug. "
+                 "Aborting.\n");
           return EXIT_FAILURE;
         }
       }
       printf("Verified with success: no false negatives\n");
       size_t matches = 0;
       size_t volume = 100000;
-      for(size_t t = 0; t < volume; t++) {
-        if(binary_fuse8_contain( t * 10001 + 13 + array_size,&filter)) {
+      for (size_t t = 0; t < volume; t++) {
+        if (binary_fuse8_contain(t * 10001 + 13 + array_size, &filter)) {
           matches++;
         }
       }
-      printf("estimated false positive rate: %.3f percent\n", matches * 100.0 / volume);
+      printf("estimated false positive rate: %.3f percent\n",
+             matches * 100.0 / volume);
     }
     free(array);
 
@@ -198,21 +197,24 @@ int main(int argc, char **argv) {
     }
     uint64_t cookie = 1234569;
     bool isok = true;
-    size_t total_bytes = sizeof(cookie) + sizeof(filter.Seed) + sizeof(filter.SegmentLength)
-                         + sizeof(filter.SegmentLengthMask) + sizeof(filter.SegmentCount)
-                         + sizeof(filter.SegmentCountLength) + sizeof(filter.ArrayLength)
-                         + sizeof(uint8_t) * filter.ArrayLength;
-
+    size_t total_bytes =
+        sizeof(cookie) + sizeof(filter.Seed) + sizeof(filter.SegmentLength) +
+        sizeof(filter.SegmentLengthMask) + sizeof(filter.SegmentCount) +
+        sizeof(filter.SegmentCountLength) + sizeof(filter.ArrayLength) +
+        sizeof(uint8_t) * filter.ArrayLength;
 
     isok &= fwrite(&cookie, sizeof(cookie), 1, write_ptr);
     isok &= fwrite(&filter.Seed, sizeof(filter.Seed), 1, write_ptr);
-    isok &= fwrite(&filter.SegmentLength, sizeof(filter.SegmentLength), 1, write_ptr);
-    isok &= fwrite(&filter.SegmentLengthMask, sizeof(filter.SegmentLengthMask), 1, write_ptr);
-    isok &= fwrite(&filter.SegmentCount, sizeof(filter.SegmentCount), 1, write_ptr);
-    isok &= fwrite(&filter.SegmentCountLength, sizeof(filter.SegmentCountLength), 1, write_ptr);
-    isok &= fwrite(&filter.ArrayLength, sizeof(filter.ArrayLength), 1, write_ptr);
-
-
+    isok &= fwrite(&filter.SegmentLength, sizeof(filter.SegmentLength), 1,
+                   write_ptr);
+    isok &= fwrite(&filter.SegmentLengthMask, sizeof(filter.SegmentLengthMask),
+                   1, write_ptr);
+    isok &=
+        fwrite(&filter.SegmentCount, sizeof(filter.SegmentCount), 1, write_ptr);
+    isok &= fwrite(&filter.SegmentCountLength,
+                   sizeof(filter.SegmentCountLength), 1, write_ptr);
+    isok &=
+        fwrite(&filter.ArrayLength, sizeof(filter.ArrayLength), 1, write_ptr);
     isok &= fwrite(filter.Fingerprints, sizeof(uint8_t) * filter.ArrayLength, 1,
                    write_ptr);
     isok &= (fclose(write_ptr) == 0);
@@ -231,23 +233,25 @@ int main(int argc, char **argv) {
     xor8_buffered_populate(array, array_size, &filter);
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
-    if(verify) {
+    if (verify) {
       printf("Checking for false negatives\n");
-      for(size_t i = 0; i < array_size; i++) {
-        if(!xor8_contain(array[i],&filter)) {
-          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+      for (size_t i = 0; i < array_size; i++) {
+        if (!xor8_contain(array[i], &filter)) {
+          printf("Detected a false negative. You probably have a bug. "
+                 "Aborting.\n");
           return EXIT_FAILURE;
         }
       }
       printf("Verified with success: no false negatives\n");
       size_t matches = 0;
       size_t volume = 100000;
-      for(size_t t = 0; t < volume; t++) {
-        if(xor8_contain( t * 10001 + 13 + array_size,&filter)) {
+      for (size_t t = 0; t < volume; t++) {
+        if (xor8_contain(t * 10001 + 13 + array_size, &filter)) {
           matches++;
         }
       }
-      printf("estimated false positive rate: %.3f percent\n", matches * 100.0 / volume);
+      printf("estimated false positive rate: %.3f percent\n",
+             matches * 100.0 / volume);
     }
     free(array);
 
@@ -281,36 +285,39 @@ int main(int argc, char **argv) {
     start = clock();
     using Table = bloomfilter::BloomFilter<uint64_t, 12, false, SimpleMixSplit>;
     Table table(array_size);
-    for(size_t i = 0; i < array_size; i++) {
+    for (size_t i = 0; i < array_size; i++) {
       table.Add(array[i]);
     }
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
-    if(verify) {
+    if (verify) {
       printf("Checking for false negatives\n");
-      for(size_t i = 0; i < array_size; i++) {
-        if(table.Contain(array[i]) != bloomfilter::Ok) {
-          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+      for (size_t i = 0; i < array_size; i++) {
+        if (table.Contain(array[i]) != bloomfilter::Ok) {
+          printf("Detected a false negative. You probably have a bug. "
+                 "Aborting.\n");
           return EXIT_FAILURE;
         }
       }
-      MappeableBloomFilter<12> filter(
-        table.SizeInBytes() / 8, table.hasher.seed, table.data);
-      for(size_t i = 0; i < array_size; i++) {
-        if(!filter.Contain(array[i])) {
-          printf("Detected a false negative. You probably have a bug. Aborting.\n");
+      MappeableBloomFilter<12> filter(table.SizeInBytes() / 8,
+                                      table.hasher.seed, table.data);
+      for (size_t i = 0; i < array_size; i++) {
+        if (!filter.Contain(array[i])) {
+          printf("Detected a false negative. You probably have a bug. "
+                 "Aborting.\n");
           return EXIT_FAILURE;
         }
       }
       printf("Verified with success: no false negatives\n");
       size_t matches = 0;
       size_t volume = 100000;
-      for(size_t t = 0; t < volume; t++) {
-        if(filter.Contain( t * 10001 + 13 + array_size)) {
+      for (size_t t = 0; t < volume; t++) {
+        if (filter.Contain(t * 10001 + 13 + array_size)) {
           matches++;
         }
       }
-      printf("estimated false positive rate: %.3f percent\n", matches * 100.0 / volume);
+      printf("estimated false positive rate: %.3f percent\n",
+             matches * 100.0 / volume);
     }
     free(array);
     FILE *write_ptr;
