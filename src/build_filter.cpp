@@ -142,6 +142,10 @@ int main(int argc, char **argv) {
   if (synthetic) {
     array_size = synthetic_size;
     array = (uint64_t *)malloc(array_size * sizeof(uint64_t));
+    if(array == NULL) {
+      printf("memory allocate failure\n");
+      return EXIT_FAILURE;
+    }
     for (size_t i = 0; i < array_size; i++) {
       array[i] = i;
     }

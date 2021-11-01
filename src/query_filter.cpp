@@ -16,7 +16,7 @@
 #include <sys/mman.h>
 
 static void printusage(char *command) {
-  printf(" Try %s  filter.bin  7C4A8D09CA3762AF \n", command);
+  printf(" Try %s  filter.bin  7C4A8D09CA3762AF (use 16-hex-character keys)\n", command);
   ;
   printf("Use the -s if you want to provide a string to be hashed (SHA1).\n");
 }
@@ -59,10 +59,10 @@ int main(int argc, char **argv) {
     hexval = ((uint64_t)digest[0] << 32) | digest[1];
   } else {
     const char *hashhex = argv[optind + 1];
-    if (strlen(hashhex) < 16) {
-      printf("bad hex. length is %zu \n", strlen(hashhex));
+    if (strlen(hashhex) != 16) {
+      printf("bad hex. length is %zu, 16 hexadecimal characters expected.\n", strlen(hashhex));
       printusage(argv[0]);
-      return -1;
+      return EXIT_FAILURE;
     }
     uint64_t x1 = hex_to_u32_nocheck((const uint8_t *)hashhex);
     uint64_t x2 = hex_to_u32_nocheck((const uint8_t *)hashhex + 4);
@@ -122,6 +122,8 @@ int main(int argc, char **argv) {
     binfilter.Seed = seed;
     isok &=
         fread(&binfilter.SegmentLength, sizeof(binfilter.SegmentLength), 1, fp);
+    isok &=
+        fread(&binfilter.SegmentLengthMask, sizeof(binfilter.SegmentLengthMask), 1, fp);
     isok &=
         fread(&binfilter.SegmentCount, sizeof(binfilter.SegmentCount), 1, fp);
     isok &= fread(&binfilter.SegmentCountLength,

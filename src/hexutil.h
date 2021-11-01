@@ -26,7 +26,7 @@ static inline uint32_t hex_to_u32_nocheck(
   // all these will sign-extend the chars looked up, placing 1-bits into the
   // high 28 bits of every invalid value. After the shifts, this will *still*
   // result in the outcome that the high 16 bits of any value with any invalid
-  // char will be all 1's. We check for this in the caller.
+  // char will be all 1's. We check for this in the calling function.
   int32_t v1 = digittoval[src[0]];
   int32_t v2 = digittoval[src[1]];
   int32_t v3 = digittoval[src[2]];
