@@ -167,8 +167,14 @@ int main(int argc, char **argv) {
   if (strcmp("binaryfuse8", filtername) == 0) {
     start = clock();
     binary_fuse8_t filter;
-    binary_fuse8_allocate(array_size, &filter);
-    binary_fuse8_populate(array, array_size, &filter);
+    if(!binary_fuse8_allocate(array_size, &filter)) {
+      printf("failed to allocate memory.\n");
+      return EXIT_FAILURE;
+    }
+    if(!binary_fuse8_populate(array, array_size, &filter)){
+      printf("failed to build the filter, do you have sufficient memory?\n");
+      return EXIT_FAILURE;
+    }
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
     if (verify) {
@@ -233,8 +239,14 @@ int main(int argc, char **argv) {
   } else if (strcmp("xor8", filtername) == 0) {
     start = clock();
     xor8_t filter;
-    xor8_allocate(array_size, &filter);
-    xor8_buffered_populate(array, array_size, &filter);
+    if(!xor8_allocate(array_size, &filter)) {
+      printf("failed to allocate memory.\n");
+      return EXIT_FAILURE;
+    }
+    if(!xor8_buffered_populate(array, array_size, &filter)) {
+      printf("failed to build the filter, do you have sufficient memory?\n");
+      return EXIT_FAILURE;
+    }
     end = clock();
     printf("Done in %.3f seconds.\n", (float)(end - start) / CLOCKS_PER_SEC);
     if (verify) {
