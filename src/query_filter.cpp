@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
     printf("Cannot read the input file %s.", filename);
     return EXIT_FAILURE;
   }
+  // should be done with an enum:
   bool xor8 = false;
   bool bin16 = false;
   bool bloom12 = false;
@@ -94,7 +95,7 @@ int main(int argc, char **argv) {
     printf("failed read.\n");
   if (fread(&seed, sizeof(seed), 1, fp) != 1)
     printf("failed read.\n");
-
+  // should be a switch/case.
   if (cookie != 1234569) {
     if(cookie == 1234570) {
       bin16 = true;

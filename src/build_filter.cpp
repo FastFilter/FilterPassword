@@ -18,9 +18,9 @@
 #include "mappeablebloomfilter.h"
 
 static void printusage(char *command) {
-  printf(" Try %s -f xor8 -o filter.bin mydatabase \n", command);
+  printf(" Try %s -f binaryfuse8 -o filter.bin mydatabase \n", command);
   ;
-  printf("The supported filters are xor8, binaryfuse8 and bloom12.\n");
+  printf("The supported filters are xor8, binaryfuse8, binaryfuse16 and bloom12.\n");
 
   printf("The -V flag verifies the resulting filter.\n");
 }
