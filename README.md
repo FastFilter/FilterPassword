@@ -1,3 +1,5 @@
+# FilterPassword
+[![Ubuntu 22.04 Sanitized CI (GCC 11)](https://github.com/FastFilter/FilterPassword/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/FastFilter/FilterPassword/actions/workflows/ubuntu.yml)
 
 ## What is this?
 
@@ -11,7 +13,7 @@ The typical approach to this problem is to apply a Bloom filters. We test here a
 
 We expect Linux or macOS.
 
-Though the constructed filter may use only about a byte per set entry, the construction itself may need 64 bytes per entry (only during the construction process). A machine with much RAM is recommended.
+Though the constructed filter may use only about a byte per set entry, the construction itself may need 64 bytes per entry (only during the construction process). A machine with much RAM is recommended when constructing large filters. It may be a good strategy to fragment your set and construct several smaller filters.
 
 ## Limitations
 
@@ -24,8 +26,12 @@ We support hundreds of millions of entries and more, if you have the available m
 
 ## Preparing the data file
 
+For quick experiments, we provide a `sample.txt` file but if you want to simulate a realistic application, you need a password data file.
+
+
 Grab password file from
 https://haveibeenpwned.com/passwords
+
 
 Most likely, you will download a 7z archive. On macOS, you can
 uncompress it as follows assuming you are a brew user:
