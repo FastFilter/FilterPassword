@@ -24,5 +24,7 @@ jobs:
       - name: Use make
         run: |
           make &&
-          ./build_filter -o filter.bin sample.txt  &&
-          ./query_filter filter.bin AF8978B1797B72AC
+          ./build_filter -V -f xor8 -o filter.bin sample.txt  &&
+          ./build_filter -V -f binaryfuse8 -o filter.bin sample.txt  &&
+          ./build_filter -V -f binaryfuse16 -o filter.bin sample.txt  &&
+          ./build_filter -V -f bloom12 -o filter.bin sample.txt 
