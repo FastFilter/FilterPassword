@@ -88,6 +88,7 @@ Processing time 58.000 microseconds.
 Expected number of queries per second: 17241.379
 ```
 
+After building the code with `make`, we recommend testing the code with `make test`.
 
 
 ## Performance comparisons
