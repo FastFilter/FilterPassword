@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
   bool xor8 = false;
+  bool bin16 = false;
   bool bloom12 = false;
   if (fread(&cookie, sizeof(cookie), 1, fp) != 1)
     printf("failed read.\n");
@@ -95,7 +96,9 @@ int main(int argc, char **argv) {
     printf("failed read.\n");
 
   if (cookie != 1234569) {
-    if (cookie == 1234567) {
+    if(cookie == 1234570) {
+      bin16 = true;
+    } else  if (cookie == 1234567) {
       xor8 = true;
       if (fread(&BlockLength, sizeof(BlockLength), 1, fp) != 1)
         printf("failed read.\n");
@@ -106,17 +109,38 @@ int main(int argc, char **argv) {
         printf("failed read.\n");
 
     } else {
-      printf("Not a filter file.\n");
+      printf("Not a filter file. Cookie found: %llu.\n", cookie);
       return EXIT_FAILURE;
     }
   }
   size_t length = 0;
   binary_fuse8_t binfilter;
+  binary_fuse16_t binfilter16;
 
   if (bloom12) {
     length = BlockLength * sizeof(uint64_t) + 3 * sizeof(uint64_t);
   } else if (xor8) {
     length = 3 * BlockLength * sizeof(uint8_t) + 3 * sizeof(uint64_t);
+  } else if(bin16) {
+    bool isok = true;
+    binfilter16.Seed = seed;
+    isok &=
+        fread(&binfilter16.SegmentLength, sizeof(binfilter16.SegmentLength), 1, fp);
+    isok &=
+        fread(&binfilter16.SegmentLengthMask, sizeof(binfilter16.SegmentLengthMask), 1, fp);
+    isok &=
+        fread(&binfilter16.SegmentCount, sizeof(binfilter16.SegmentCount), 1, fp);
+    isok &= fread(&binfilter16.SegmentCountLength,
+                  sizeof(binfilter16.SegmentCountLength), 1, fp);
+    isok &= fread(&binfilter16.ArrayLength, sizeof(binfilter16.ArrayLength), 1, fp);
+    if (!isok)
+      printf("failed read.\n");
+    length =
+        sizeof(cookie) + sizeof(binfilter16.Seed) +
+        sizeof(binfilter16.SegmentLength) + sizeof(binfilter16.SegmentLengthMask) +
+        sizeof(binfilter16.SegmentCount) + sizeof(binfilter16.SegmentCountLength) +
+        sizeof(binfilter16.ArrayLength) + sizeof(uint16_t) * binfilter16.ArrayLength;
+
   } else {
     bool isok = true;
     binfilter.Seed = seed;
@@ -142,8 +166,10 @@ int main(int argc, char **argv) {
     printf("Bloom filter detected.\n");
   else if (xor8)
     printf("Xor filter detected.\n");
+  else if(bin16)
+    printf("16-bit binary fuse filter detected.\n");
   else
-    printf("Binary fuse filter detected.\n");
+    printf("8-bit binary fuse filter detected.\n");
   fclose(fp);
   int fd = open(filename, O_RDONLY);
   bool shared = false;
@@ -179,6 +205,17 @@ int main(int argc, char **argv) {
     filter.blockLength = BlockLength;
     filter.fingerprints = addr + 3 * sizeof(uint64_t);
     if (xor8_contain(hexval, &filter)) {
+      printf("Probably in the set.\n");
+    } else {
+      printf("Surely not in the set.\n");
+    }
+  } else if (bin16) {
+    binfilter16.Fingerprints = reinterpret_cast<uint16_t*>(
+        addr + sizeof(cookie) + sizeof(binfilter16.Seed) +
+        sizeof(binfilter16.SegmentLength) + sizeof(binfilter16.SegmentLengthMask) +
+        sizeof(binfilter16.SegmentCount) + sizeof(binfilter16.SegmentCountLength) +
+        sizeof(binfilter16.ArrayLength));
+    if (binary_fuse16_contain(hexval, &binfilter16)) {
       printf("Probably in the set.\n");
     } else {
       printf("Surely not in the set.\n");

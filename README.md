@@ -57,7 +57,7 @@ Though the filter can use little memory (less than a GB), it seems unwarranted t
 
 There are two executables:
 
-- `build_filter` is the expensive program that parses the large text files containing password hashes.
+- `build_filter` is the expensive program that parses the large text files containing password hashes. If you want to check the filter at construction time, you can use the `-V` flag. You may also specify the filter type with the `-f` flag: `-f binaryfuse8`, `-f binaryfuse16`, `-f xor8`, `-f bloom12`.
 - `query_filter` is a simple program that takes a 64-bit hash in hexadecimal for (the first 16 hexadecimal characters from the SHA1 hash) and checks whether the hash is contained in our set.
 
 Do 
@@ -87,6 +87,7 @@ Probably in the set.
 Processing time 58.000 microseconds.
 Expected number of queries per second: 17241.379
 ```
+
 
 
 ## Performance comparisons

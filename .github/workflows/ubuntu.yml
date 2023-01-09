@@ -1,0 +1,28 @@
+name: Ubuntu 22.04 Sanitized CI (GCC 11)
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  ubuntu-build:
+    if: >-
+      ! contains(toJSON(github.event.commits.*.message), '[skip ci]') &&
+      ! contains(toJSON(github.event.commits.*.message), '[skip github]')
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - {shared: ON}
+          - {shared: OFF}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use make
+        run: |
+          make &&
+          ./build_filter -o filter.bin sample.txt  &&
+          ./query_filter filter.bin AF8978B1797B72AC
