@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
         printf("failed read.\n");
 
     } else {
-      printf("Not a filter file. Cookie found: %llu.\n", cookie);
+      printf("Not a filter file. Cookie found: %llu.\n", (long long unsigned int)cookie);
       return EXIT_FAILURE;
     }
   }
