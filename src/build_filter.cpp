@@ -1,8 +1,6 @@
 #include <getopt.h>
 #include <inttypes.h>
-#include <iostream>
 #include <limits.h>
-#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,15 +9,12 @@
 #include "hexutil.h"
 #include "xor_singleheader/include/binaryfusefilter.h"
 #include "xor_singleheader/include/xorfilter.h"
-#include "xorfilter/xorfilter.h"
 
 #include "mappeablebloomfilter.h"
 
 static void printusage(char *command) {
   printf(" Try %s -f binaryfuse8 -o filter.bin mydatabase \n", command);
-  ;
   printf("The supported filters are xor8, binaryfuse8, binaryfuse16 and bloom12.\n");
-
   printf("The -V flag verifies the resulting filter.\n");
 }
 
