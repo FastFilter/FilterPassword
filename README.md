@@ -8,6 +8,8 @@ Suppose that you have a database made of half a billion passwords. You want to c
 The typical approach to this problem is to apply a Bloom filters. We test here a binary fuse filter. The goal is for the filter to use very little memory.
 
 
+Note: This software project is a demonstration. If you wish to use this software in your own projects, the corresponding software library is the [Header-only Xor and Binary Fuse Filter library](https://github.com/FastFilter/xor_singleheader/).
+
 ## Requirement
 
 
