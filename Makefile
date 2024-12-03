@@ -21,7 +21,6 @@ build_filter: src/build_filter.cpp \
 	src/util.h \
 	dependencies/fastfilter_cpp/src/bloom/bloom.h \
 	dependencies/fastfilter_cpp/src/hashutil.h \
-	dependencies/fastfilter_cpp/src/xorfilter/xorfilter.h \
 	dependencies/xor_singleheader/include/binaryfusefilter.h \
 	dependencies/xor_singleheader/include/xorfilter.h
 	c++ -O3 -o build_filter src/build_filter.cpp -std=c++11 -Wall -Idependencies/fastfilter_cpp/src -Idependencies
