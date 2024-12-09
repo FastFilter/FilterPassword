@@ -6,6 +6,9 @@ dependencies/fastfilter_cpp/src/xorfilter/xorfilter.h:
 dependencies/xor_singleheader/include/binaryfusefilter.h:
 	git submodule update --init --recursive
 
+dependencies/fastfilter_cpp/src/bloom/bloom.h:
+	git submodule update --init --recursive
+
 query_filter: src/query_filter.cpp \
 	src/hexutil.h \
 	src/mappeablebloomfilter.h \
